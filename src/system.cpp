@@ -23,13 +23,11 @@ vector<Process>& System::Processes() {
     set<int> extant_pids;
     for (Process const& process : processes_) {
         extant_pids.insert(process.Pid());
-    }
-
+            }
     for (int pid : pids) {
         if (extant_pids.find(pid) == extant_pids.end())
-            processes_.emplace_back(pid);
+            processes_.emplace_back(Process(pid));
     }
-
     for (auto& process : processes_) {
         process.CpuUtilization(LinuxParser::ActiveJiffies(process.Pid()),
                                LinuxParser::Jiffies());

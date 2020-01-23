@@ -180,7 +180,7 @@ int LinuxParser::RunningProcesses() {
         while (std::getline(filestream, line)){
             std::istringstream linestream(line);
             while (linestream >> key >> value){
-                if (key == "proc_running"){
+                if (key == "procs_running"){
                     return std::stoi(value);
                 }
             }
@@ -210,7 +210,7 @@ string LinuxParser::Ram(int pid) {
             std::istringstream linestream(line);
             while (linestream >> key >> value >> units){
                 if (key == "VmSize:"){
-                    return value;
+                    return std::to_string(stoi(value) / 1024);
                 }
             }
         }
@@ -239,17 +239,22 @@ string LinuxParser::Uid(int pid) {
 // Done: Read and return the user associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
 string LinuxParser::User(int pid) {
-    string line, username, dummy, key;
-    string uid = LinuxParser::Uid(pid);
+    string line;
+    string token = ":x:" + to_string(pid) + ":";
+    //std::cout << "token: " << token << "\n";
     std::ifstream filestream(kPasswordPath);
-    if (filestream.is_open()){
-        while (std::getline(filestream, line)){
-            std::replace(line.begin(),line.end(),':',' ');
+
+    if (filestream.is_open()) {
+        while (std::getline(filestream, line)) {
             std::istringstream linestream(line);
-            while (linestream >> username >> dummy >> key){
-                if (key == uid){
-                    return username;
-                }
+            std::size_t found = line.find(token);
+
+            //std::cout << "found: " << found << "\n";
+            if (found!=std::string::npos) {
+                //std::cout << "line: " << line << "\n";
+                std::string user = line.substr (0,found);
+                //std::cout << "found: " << found << ", user: " << user << '\n';
+                return user;
             }
         }
     }
@@ -265,12 +270,12 @@ long LinuxParser::UpTime(int pid) {
     if (filestream.is_open()){
         for (int i = 0; filestream >> value; ++i) {
             if (i == 13){
-                uptime = std::stol(value) / sysconf(_SC_CLK_TCK);
+                uptime = stol(value) / sysconf(_SC_CLK_TCK);
                 return uptime;
             }
         }
     }
-    return 0;
+    return uptime;
 }
 // Done: Return pid's cpu utilization
 float LinuxParser::pidCpuUtilization(int pid){
